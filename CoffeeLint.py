@@ -52,6 +52,15 @@ class CoffeeLintCodeCommand(sublime_plugin.TextCommand):
         os.unlink(config.name)
         return result
 
+    def call_exe_no_config(self, command, content):
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.write(content.encode('utf8'))
+        temp_file.close()
+        command.append(temp_file.name)
+        result = self.call_exe(command)
+        os.unlink(temp_file.name)
+        return result
+
     def create_create_config_file(self):
         config = tempfile.NamedTemporaryFile(delete=False)
         lint_config = self.settings.get('lint_config')
@@ -76,7 +85,7 @@ class CoffeeLintCodeCommand(sublime_plugin.TextCommand):
         selection = sublime.Region(0, self.view.size())
         dirname, _ = os.path.split(os.path.abspath(__file__))
         config = os.path.join(dirname, 'config.json')
-        result = self.call_exe_with_temp_file(['coffeelint', '--nocolor'], self.view.substr(selection))
+        result = self.call_exe_no_config(['coffeelint', '--nocolor'], self.view.substr(selection))
         data="\n".join(result.split('\n')[1:-1])
         if data:
             self.show_output_panel(data)
